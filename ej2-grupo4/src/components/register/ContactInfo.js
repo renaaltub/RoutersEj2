@@ -1,6 +1,6 @@
 // components/register/ContactInfo.js
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const ContactInfo = () => {
     const navigate = useNavigate();
@@ -11,10 +11,25 @@ const ContactInfo = () => {
         city: ''
     });
 
+    // Helper seguro para parsear JSON desde localStorage
+    const safeParse = (key) => {
+        try {
+            const item = localStorage.getItem(key);
+            return item ? JSON.parse(item) : {};
+        } catch (err) {
+            // Si el JSON está corrupto, devolvemos objeto vacío en vez de romper la app
+            return {};
+        }
+    };
+
     React.useEffect(() => {
-        // Cargar datos previos del localStorage
-        const savedData = JSON.parse(localStorage.getItem('registrationData') || '{}');
-        setFormData(prev => ({ ...prev, ...savedData }));
+        // Cargar datos previos del localStorage de forma segura y solo tomar keys esperadas
+        const savedData = safeParse('registrationData');
+        const allowed = {};
+        ['email', 'phone', 'address', 'city'].forEach(k => {
+            if (k in savedData) allowed[k] = savedData[k];
+        });
+        setFormData(prev => ({ ...prev, ...allowed }));
     }, []);
 
     const handleChange = (e) => {
@@ -26,9 +41,10 @@ const ContactInfo = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Guardar en localStorage
+        // Guardar en localStorage de forma segura
+        const existing = safeParse('registrationData');
         localStorage.setItem('registrationData', JSON.stringify({
-            ...JSON.parse(localStorage.getItem('registrationData') || '{}'),
+            ...existing,
             ...formData
         }));
         navigate('/register/confirmation');
@@ -38,8 +54,9 @@ const ContactInfo = () => {
         <form onSubmit={handleSubmit}>
             <h2>Información de Contacto</h2>
             <div style={{ marginBottom: '15px' }}>
-                <label>Email:</label>
+                <label htmlFor="email">Email:</label>
                 <input
+                    id="email"
                     type="email"
                     name="email"
                     value={formData.email}
@@ -49,8 +66,9 @@ const ContactInfo = () => {
                 />
             </div>
             <div style={{ marginBottom: '15px' }}>
-                <label>Teléfono:</label>
+                <label htmlFor="phone">Teléfono:</label>
                 <input
+                    id="phone"
                     type="tel"
                     name="phone"
                     value={formData.phone}
@@ -60,8 +78,9 @@ const ContactInfo = () => {
                 />
             </div>
             <div style={{ marginBottom: '15px' }}>
-                <label>Dirección:</label>
+                <label htmlFor="address">Dirección:</label>
                 <input
+                    id="address"
                     type="text"
                     name="address"
                     value={formData.address}
@@ -71,8 +90,9 @@ const ContactInfo = () => {
                 />
             </div>
             <div style={{ marginBottom: '15px' }}>
-                <label>Ciudad:</label>
+                <label htmlFor="city">Ciudad:</label>
                 <input
+                    id="city"
                     type="text"
                     name="city"
                     value={formData.city}
